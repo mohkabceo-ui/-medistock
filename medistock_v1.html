@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediStock V1</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#f5f7f8;color:#17221b}
+header{background:#123b2a;color:white;padding:20px 18px 18px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:23px} header p{margin:4px 0 0;opacity:.75;font-size:13px}
+nav{display:flex;overflow:auto;background:white;border-bottom:1px solid #ddd;position:sticky;top:74px;z-index:4}
+nav button{border:0;background:white;padding:13px 14px;font-weight:600;color:#66736c;white-space:nowrap}
+nav button.active{color:#123b2a;border-bottom:3px solid #123b2a}
+main{max-width:850px;margin:auto;padding:18px}
+.page{display:none}.page.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.card{background:white;border:1px solid #e4e8e5;border-radius:14px;padding:16px;box-shadow:0 2px 8px #00000008}
+.metric small{color:#68746e}.metric strong{display:block;font-size:23px;margin-top:6px}
+h2{font-size:19px;margin:5px 0 14px}.section{margin-top:20px}
+button.primary{background:#123b2a;color:white;border:0;border-radius:10px;padding:12px 16px;font-weight:700}
+button.secondary{background:#edf2ef;color:#123b2a;border:0;border-radius:10px;padding:10px 13px;font-weight:600}
+button.danger{background:#fff0f0;color:#b42318;border:0;border-radius:8px;padding:7px 10px}
+input,select{width:100%;padding:11px;border:1px solid #ccd5cf;border-radius:9px;margin-top:6px;background:white}
+label{font-size:13px;color:#58645e;display:block;margin-bottom:11px}
+.form{background:white;padding:16px;border-radius:14px;border:1px solid #e4e8e5}
+table{width:100%;border-collapse:collapse;background:white;border-radius:12px;overflow:hidden}
+th,td{padding:11px 9px;border-bottom:1px solid #edf0ee;text-align:left;font-size:13px}th{background:#f0f4f1;color:#4d5b53}
+.badge{padding:4px 7px;border-radius:99px;background:#e9f5ee;color:#17643d;font-size:11px}.warn{background:#fff5df;color:#956500}
+.empty{text-align:center;color:#758078;padding:25px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.modal{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;z-index:10}
+.modal.show{display:flex}.sheet{background:white;width:100%;max-width:650px;margin:auto;border-radius:18px 18px 0 0;padding:20px;max-height:90vh;overflow:auto}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#17221b;color:white;padding:10px 16px;border-radius:99px;display:none;z-index:20}
+@media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}.sheet{border-radius:18px}.modal{align-items:center}}
+</style>
+</head>
+<body>
+<header><h1>🏪 MediStock</h1><p>Medicine • Herbal • Supplement Business Manager</p></header>
+<nav id="nav">
+<button class="active" data-page="dashboard">Dashboard</button>
+<button data-page="products">Products</button>
+<button data-page="sales">Sales</button>
+<button data-page="customers">Customers</button>
+<button data-page="reports">Reports</button>
+</nav>
+<main>
+<section id="dashboard" class="page active">
+<h2>Dashboard</h2>
+<div class="grid">
+<div class="card metric"><small>Today's Sales</small><strong id="mSales">₦0</strong></div>
+<div class="card metric"><small>Today's Profit</small><strong id="mProfit">₦0</strong></div>
+<div class="card metric"><small>Products</small><strong id="mProducts">0</strong></div>
+<div class="card metric"><small>Low Stock</small><strong id="mLow">0</strong></div>
+</div>
+<div class="section card"><h3>⚠️ Expiring Soon</h3><div id="expiryList"></div></div>
+<div class="section card"><h3>Recent Sales</h3><div id="recentSales"></div></div>
+</section>
+
+<section id="products" class="page">
+<div class="actions"><button class="primary" onclick="openProduct()">＋ Add Product</button></div>
+<div class="card"><div id="productsTable"></div></div>
+</section>
+
+<section id="sales" class="page">
+<div class="actions"><button class="primary" onclick="openSale()">＋ Record Sale</button></div>
+<div class="card"><div id="salesTable"></div></div>
+</section>
+
+<section id="customers" class="page">
+<div class="actions"><button class="primary" onclick="openCustomer()">＋ Add Customer</button></div>
+<div class="card"><div id="customersTable"></div></div>
+</section>
+
+<section id="reports" class="page">
+<div class="grid">
+<div class="card metric"><small>Total Revenue</small><strong id="rRevenue">₦0</strong></div>
+<div class="card metric"><small>Total Profit</small><strong id="rProfit">₦0</strong></div>
+<div class="card metric"><small>Inventory Units</small><strong id="rStock">0</strong></div>
+<div class="card metric"><small>Credit Owed</small><strong id="rCredit">₦0</strong></div>
+</div>
+<div class="section card"><h3>Best Sellers</h3><div id="bestSellers"></div></div>
+</section>
+</main>
+
+<div id="modal" class="modal"><div class="sheet">
+<div class="actions" style="justify-content:space-between"><h2 id="modalTitle">Add</h2><button class="secondary" onclick="closeModal()">Close</button></div>
+<div id="modalBody"></div>
+</div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+const KEY="medistock_v1";
+let db=JSON.parse(localStorage.getItem(KEY)||'{"products":[],"sales":[],"customers":[]}');
+const money=n=>"₦"+Number(n||0).toLocaleString("en-NG",{maximumFractionDigits:2});
+const save=()=>{localStorage.setItem(KEY,JSON.stringify(db));renderAll()};
+const toast=m=>{let t=document.getElementById("toast");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",1800)};
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(b.dataset.page).classList.add("active")});
+
+function openModal(title,body){document.getElementById("modalTitle").textContent=title;document.getElementById("modalBody").innerHTML=body;document.getElementById("modal").classList.add("show")}
+function closeModal(){document.getElementById("modal").classList.remove("show")}
+
+function openProduct(){
+openModal("Add Product",`<div class="form">
+<label>Product name<input id="pname" placeholder="e.g. Vitamin C 1000mg"></label>
+<label>Category<select id="pcat"><option>Medicine</option><option>Herbal</option><option>Supplement</option><option>Vitamin</option><option>Capsule</option><option>Tea</option><option>Other</option></select></label>
+<label>Buying price<input id="pbuy" type="number" min="0" placeholder="2000"></label>
+<label>Selling price<input id="psell" type="number" min="0" placeholder="2500"></label>
+<label>Quantity<input id="pqty" type="number" min="0" placeholder="20"></label>
+<label>Expiry date<input id="pexp" type="date"></label>
+<label>Low-stock alert at<input id="plow" type="number" min="0" value="5"></label>
+<button class="primary" onclick="addProduct()">Save Product</button>
+</div>`)}
+
+function addProduct(){
+let name=pname.value.trim(); if(!name)return toast("Enter a product name");
+db.products.push({id:Date.now(),name,cat:pcat.value,buy:+pbuy.value||0,sell:+psell.value||0,qty:+pqty.value||0,exp:pexp.value,low:+plow.value||0});
+save();closeModal();toast("Product added");
+}
+function openSale(){
+if(!db.products.length)return toast("Add a product first");
+openModal("Record Sale",`<div class="form">
+<label>Product<select id="sprod">${db.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${money(p.sell)} (stock ${p.qty})</option>`).join("")}</select></label>
+<label>Quantity<input id="sqty" type="number" min="1" value="1"></label>
+<label>Payment<select id="spay"><option>Cash</option><option>Transfer</option><option>Credit</option></select></label>
+<label>Customer (required for credit)<input id="scust" placeholder="Customer name"></label>
+<button class="primary" onclick="addSale()">Complete Sale</button>
+</div>`)}
+
+function addSale(){
+let p=db.products.find(x=>x.id==sprod.value), q=+sqty.value||0;if(!p||q<1)return;
+if(q>p.qty)return toast("Not enough stock");
+let total=q*p.sell, profit=q*(p.sell-p.buy);
+p.qty-=q;
+let customer=scust.value.trim(), payment=spay.value;
+if(payment==="Credit"){
+ if(!customer)return toast("Enter customer name for credit");
+ let c=db.customers.find(x=>x.name.toLowerCase()===customer.toLowerCase());
+ if(!c){c={id:Date.now()+1,name:customer,phone:"",balance:0};db.customers.push(c)}
+ c.balance+=total;
+}
+db.sales.unshift({id:Date.now(),productId:p.id,qty:q,total,profit,payment,customer,date:new Date().toISOString()});
+save();closeModal();toast("Sale recorded");
+}
+
+function openCustomer(){openModal("Add Customer",`<div class="form"><label>Name<input id="cname" placeholder="Customer name"></label><label>Phone<input id="cphone" placeholder="Phone number"></label><button class="primary" onclick="addCustomer()">Save Customer</button></div>`)}
+function addCustomer(){let name=cname.value.trim();if(!name)return toast("Enter a name");db.customers.push({id:Date.now(),name,phone:cphone.value.trim(),balance:0});save();closeModal();toast("Customer added")}
+
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function fmtDate(x){return x?new Date(x).toLocaleDateString("en-NG"):"—"}
+function renderAll(){renderDashboard();renderProducts();renderSales();renderCustomers();renderReports()}
+function renderDashboard(){
+let today=new Date().toDateString(), ts=db.sales.filter(s=>new Date(s.date).toDateString()===today);
+mSales.textContent=money(ts.reduce((a,s)=>a+s.total,0));mProfit.textContent=money(ts.reduce((a,s)=>a+s.profit,0));mProducts.textContent=db.products.length;mLow.textContent=db.products.filter(p=>p.qty<=p.low).length;
+let now=Date.now(), soon=now+30*864e5, ex=db.products.filter(p=>p.exp&&new Date(p.exp).getTime()<=soon).slice(0,8);
+expiryList.innerHTML=ex.length?ex.map(p=>`<div style="padding:7px 0"><b>${esc(p.name)}</b> <span class="badge warn">${fmtDate(p.exp)}</span></div>`).join(""):'<div class="empty">No products expiring within 30 days.</div>';
+recentSales.innerHTML=db.sales.slice(0,6).map(s=>{let p=db.products.find(x=>x.id===s.productId);return `<div style="padding:8px 0;border-bottom:1px solid #eee">${esc(p?.name||"Deleted product")} × ${s.qty} — <b>${money(s.total)}</b><br><small>${fmtDate(s.date)} • ${s.payment}</small></div>`}).join("")||'<div class="empty">No sales yet.</div>';
+}
+function renderProducts(){
+productsTable.innerHTML=db.products.length?`<table><tr><th>Product</th><th>Price</th><th>Stock</th><th>Expiry</th></tr>${db.products.map(p=>`<tr><td><b>${esc(p.name)}</b><br><small>${p.cat}</small></td><td>${money(p.sell)}</td><td><span class="badge ${p.qty<=p.low?'warn':''}">${p.qty}</span></td><td>${fmtDate(p.exp)}</td></tr>`).join("")}</table>`:'<div class="empty">No products. Add your first product.</div>';
+}
+function renderSales(){
+salesTable.innerHTML=db.sales.length?`<table><tr><th>Product</th><th>Qty</th><th>Total</th><th>Profit</th><th>Date</th></tr>${db.sales.map(s=>{let p=db.products.find(x=>x.id===s.productId);return `<tr><td>${esc(p?.name||"Deleted")}</td><td>${s.qty}</td><td>${money(s.total)}</td><td>${money(s.profit)}</td><td>${fmtDate(s.date)}</td></tr>`}).join("")}</table>`:'<div class="empty">No sales yet.</div>';
+}
+function renderCustomers(){
+customersTable.innerHTML=db.customers.length?`<table><tr><th>Customer</th><th>Phone</th><th>Balance</th></tr>${db.customers.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.phone||"—")}</td><td>${money(c.balance)}</td></tr>`).join("")}</table>`:'<div class="empty">No customers yet.</div>';
+}
+function renderReports(){
+rRevenue.textContent=money(db.sales.reduce((a,s)=>a+s.total,0));rProfit.textContent=money(db.sales.reduce((a,s)=>a+s.profit,0));rStock.textContent=db.products.reduce((a,p)=>a+p.qty,0);rCredit.textContent=money(db.customers.reduce((a,c)=>a+c.balance,0));
+let map={};db.sales.forEach(s=>map[s.productId]=(map[s.productId]||0)+s.qty);
+let arr=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,5);
+bestSellers.innerHTML=arr.length?arr.map(([id,q],i)=>{let p=db.products.find(x=>x.id==id);return `<div style="padding:9px 0;border-bottom:1px solid #eee"><b>${i+1}. ${esc(p?.name||"Deleted")}</b><span style="float:right">${q} sold</span></div>`}).join(""):'<div class="empty">Sales will appear here.</div>';
+}
+renderAll();
+</script>
+</body>
+</html>
