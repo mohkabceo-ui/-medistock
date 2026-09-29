@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d3b2e">
+<title>MediStock — Business Manager</title>
+<style>
+:root{
+  --green:#0d3b2e;--green2:#145c46;--mint:#eaf5f0;--bg:#f5f7f6;
+  --card:#fff;--text:#17211d;--muted:#718079;--line:#e3e9e5;
+  --orange:#b76b00;--orange-bg:#fff4df;--red:#b42318;--red-bg:#fff0ee;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Arial,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.topbar{background:linear-gradient(135deg,var(--green),#092c22);color:#fff;padding:18px 18px 20px;position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:center;gap:11px}
+.logo{width:40px;height:40px;border-radius:12px;background:#fff;color:var(--green);display:grid;place-items:center;font-weight:900;font-size:20px}
+.brand h1{font-size:20px;margin:0;letter-spacing:-.3px}
+.brand p{font-size:11px;margin:2px 0 0;color:#cfe0d9}
+.topbar-row{display:flex;justify-content:space-between;align-items:center}
+.status{font-size:11px;background:#ffffff18;border:1px solid #ffffff24;padding:6px 9px;border-radius:99px;color:#d8ebe3}
+nav{position:sticky;top:78px;z-index:15;background:#fff;border-bottom:1px solid var(--line);display:flex;overflow:auto;padding:0 10px;box-shadow:0 2px 10px #00000006}
+nav button{border:0;background:none;color:#77827d;padding:13px 14px 11px;white-space:nowrap;font-size:13px;font-weight:700;border-bottom:3px solid transparent}
+nav button.active{color:var(--green);border-bottom-color:var(--green)}
+main{max-width:980px;margin:auto;padding:18px 14px 90px}
+.page{display:none}.page.active{display:block}
+.page-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:2px 0 15px}
+.page-head h2{margin:0;font-size:22px;letter-spacing:-.5px}.page-head p{margin:4px 0 0;color:var(--muted);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:0 3px 14px #15382b08}
+.metric{min-height:104px}.metric small{display:block;color:var(--muted);font-size:11px;font-weight:700}.metric strong{display:block;font-size:21px;margin-top:10px;letter-spacing:-.4px}
+.metric .dot{width:8px;height:8px;border-radius:50%;background:var(--green2);display:inline-block;margin-right:5px}
+.section{margin-top:13px}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.section-title h3{font-size:15px;margin:0}.section-title span{font-size:11px;color:var(--muted)}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px}
+.primary,.secondary,.danger{border:0;border-radius:11px;padding:11px 13px;font-weight:800}
+.primary{background:var(--green);color:#fff}.primary:active{transform:scale(.99)}
+.secondary{background:var(--mint);color:var(--green)}
+.danger{background:var(--red-bg);color:var(--red)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.search{position:relative;margin-bottom:12px}.search input{padding-left:38px}
+.search span{position:absolute;left:13px;top:10px;color:var(--muted)}
+input,select{width:100%;padding:11px 12px;border:1px solid #ccd6d0;border-radius:10px;background:#fff;color:var(--text);outline:none}
+input:focus,select:focus{border-color:var(--green2);box-shadow:0 0 0 3px #145c4612}
+label{display:block;font-size:12px;color:#5f6d66;font-weight:700;margin-bottom:12px}
+.form{background:#fff;padding:16px;border:1px solid var(--line);border-radius:15px}
+table{width:100%;border-collapse:collapse;background:#fff}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}
+th,td{padding:12px 10px;border-bottom:1px solid #edf1ee;text-align:left;font-size:12px;white-space:nowrap}
+th{background:#f6f8f7;color:#5d6b64;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+tr:last-child td{border-bottom:0}
+.badge{display:inline-block;padding:4px 8px;border-radius:99px;background:#e9f5ee;color:#17643d;font-size:10px;font-weight:800}
+.warn{background:var(--orange-bg);color:var(--orange)}
+.alert{display:flex;gap:10px;align-items:flex-start;padding:11px;border-radius:12px;background:var(--orange-bg);margin-bottom:8px}
+.alert b{font-size:12px}.alert small{display:block;color:#80602c;margin-top:2px}
+.empty{text-align:center;color:var(--muted);padding:28px 12px;font-size:13px}
+.list-row{padding:10px 0;border-bottom:1px solid #edf1ee}.list-row:last-child{border-bottom:0}
+.modal{position:fixed;inset:0;background:#06150f99;display:none;align-items:flex-end;z-index:50;padding:0}
+.modal.show{display:flex}.sheet{background:#fff;width:100%;max-width:650px;margin:auto;border-radius:20px 20px 0 0;padding:18px;max-height:92vh;overflow:auto}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.modal-head h2{margin:0;font-size:18px}
+.close{border:0;background:#eef2ef;color:var(--green);border-radius:9px;padding:8px 11px;font-weight:700}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#16241e;color:#fff;padding:10px 16px;border-radius:99px;display:none;z-index:70;font-size:12px;box-shadow:0 8px 30px #0003}
+@media(min-width:700px){
+  .grid{grid-template-columns:repeat(4,1fr)}
+  .quick{grid-template-columns:repeat(2,180px)}
+  .sheet{border-radius:20px}
+  .modal{align-items:center;padding:20px}
+  main{padding-left:20px;padding-right:20px}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-row">
+    <div class="brand">
+      <div class="logo">M</div>
+      <div><h1>MediStock</h1><p>Medicine • Herbal • Supplement Business Manager</p></div>
+    </div>
+    <div class="status">Local data</div>
+  </div>
+</header>
+
+<nav id="nav">
+  <button class="active" data-page="dashboard">Dashboard</button>
+  <button data-page="products">Products</button>
+  <button data-page="sales">Sales</button>
+  <button data-page="customers">Customers</button>
+  <button data-page="reports">Reports</button>
+</nav>
+
+<main>
+<section id="dashboard" class="page active">
+  <div class="page-head"><div><h2>Good morning</h2><p>Here is your shop overview.</p></div></div>
+  <div class="grid">
+    <div class="card metric"><small>Today's Sales</small><strong id="mSales">₦0</strong><span class="dot"></span></div>
+    <div class="card metric"><small>Today's Profit</small><strong id="mProfit">₦0</strong></div>
+    <div class="card metric"><small>Total Products</small><strong id="mProducts">0</strong></div>
+    <div class="card metric"><small>Low Stock</small><strong id="mLow">0</strong></div>
+  </div>
+
+  <div class="quick">
+    <button class="primary" onclick="openProduct()">＋ Add Product</button>
+    <button class="secondary" onclick="openSale()">＋ Record Sale</button>
+  </div>
+
+  <div class="section card">
+    <div class="section-title"><h3>Expiry alerts</h3><span>Next 30 days</span></div>
+    <div id="expiryList"></div>
+  </div>
+
+  <div class="section card">
+    <div class="section-title"><h3>Recent sales</h3><span>Latest activity</span></div>
+    <div id="recentSales"></div>
+  </div>
+</section>
+
+<section id="products" class="page">
+  <div class="page-head"><div><h2>Products</h2><p>Manage your inventory.</p></div><button class="primary" onclick="openProduct()">＋ Add</button></div>
+  <div class="search"><span>⌕</span><input id="productSearch" placeholder="Search products..." oninput="renderProducts()"></div>
+  <div class="card"><div class="table-wrap"><div id="productsTable"></div></div></div>
+</section>
+
+<section id="sales" class="page">
+  <div class="page-head"><div><h2>Sales</h2><p>Track every transaction.</p></div><button class="primary" onclick="openSale()">＋ Record</button></div>
+  <div class="card"><div class="table-wrap"><div id="salesTable"></div></div></div>
+</section>
+
+<section id="customers" class="page">
+  <div class="page-head"><div><h2>Customers</h2><p>Track customers and credit.</p></div><button class="primary" onclick="openCustomer()">＋ Add</button></div>
+  <div class="card"><div class="table-wrap"><div id="customersTable"></div></div></div>
+</section>
+
+<section id="reports" class="page">
+  <div class="page-head"><div><h2>Reports</h2><p>Understand your business performance.</p></div></div>
+  <div class="grid">
+    <div class="card metric"><small>Total Revenue</small><strong id="rRevenue">₦0</strong></div>
+    <div class="card metric"><small>Total Profit</small><strong id="rProfit">₦0</strong></div>
+    <div class="card metric"><small>Inventory Units</small><strong id="rStock">0</strong></div>
+    <div class="card metric"><small>Credit Owed</small><strong id="rCredit">₦0</strong></div>
+  </div>
+  <div class="section card"><div class="section-title"><h3>Best sellers</h3><span>By units sold</span></div><div id="bestSellers"></div></div>
+</section>
+</main>
+
+<div id="modal" class="modal"><div class="sheet">
+  <div class="modal-head"><h2 id="modalTitle">Add</h2><button class="close" onclick="closeModal()">Close</button></div>
+  <div id="modalBody"></div>
+</div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+const KEY="medistock_v1";
+let db=JSON.parse(localStorage.getItem(KEY)||'{"products":[],"sales":[],"customers":[]}');
+const money=n=>"₦"+Number(n||0).toLocaleString("en-NG",{maximumFractionDigits:2});
+const save=()=>{localStorage.setItem(KEY,JSON.stringify(db));renderAll()};
+const toast=m=>{const t=document.getElementById("toast");t.textContent=m;t.style.display="block";clearTimeout(window._toast);window._toast=setTimeout(()=>t.style.display="none",1800)};
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(b.dataset.page).classList.add("active");window.scrollTo({top:0,behavior:"smooth"})});
+function openModal(title,body){document.getElementById("modalTitle").textContent=title;document.getElementById("modalBody").innerHTML=body;document.getElementById("modal").classList.add("show")}
+function closeModal(){document.getElementById("modal").classList.remove("show")}
+function openProduct(){openModal("Add Product",`<div class="form">
+<label>Product name<input id="pname" placeholder="e.g. Vitamin C 1000mg"></label>
+<label>Category<select id="pcat"><option>Medicine</option><option>Herbal</option><option>Supplement</option><option>Vitamin</option><option>Capsule</option><option>Tea</option><option>Other</option></select></label>
+<label>Buying price<input id="pbuy" type="number" min="0" placeholder="2000"></label>
+<label>Selling price<input id="psell" type="number" min="0" placeholder="2500"></label>
+<label>Quantity<input id="pqty" type="number" min="0" placeholder="20"></label>
+<label>Expiry date<input id="pexp" type="date"></label>
+<label>Low-stock alert at<input id="plow" type="number" min="0" value="5"></label>
+<button class="primary" onclick="addProduct()">Save Product</button></div>`)}
+function addProduct(){let name=pname.value.trim();if(!name)return toast("Enter a product name");db.products.push({id:Date.now(),name,cat:pcat.value,buy:+pbuy.value||0,sell:+psell.value||0,qty:+pqty.value||0,exp:pexp.value,low:+plow.value||0});save();closeModal();toast("Product added")}
+function openSale(){if(!db.products.length)return toast("Add a product first");openModal("Record Sale",`<div class="form">
+<label>Product<select id="sprod">${db.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${money(p.sell)} (stock ${p.qty})</option>`).join("")}</select></label>
+<label>Quantity<input id="sqty" type="number" min="1" value="1"></label>
+<label>Payment<select id="spay"><option>Cash</option><option>Transfer</option><option>Credit</option></select></label>
+<label>Customer (required for credit)<input id="scust" placeholder="Customer name"></label>
+<button class="primary" onclick="addSale()">Complete Sale</button></div>`)}
+function addSale(){let p=db.products.find(x=>x.id==sprod.value),q=+sqty.value||0;if(!p||q<1)return;if(q>p.qty)return toast("Not enough stock");let total=q*p.sell,profit=q*(p.sell-p.buy);p.qty-=q;let customer=scust.value.trim(),payment=spay.value;if(payment==="Credit"){if(!customer)return toast("Enter customer name for credit");let c=db.customers.find(x=>x.name.toLowerCase()===customer.toLowerCase());if(!c){c={id:Date.now()+1,name:customer,phone:"",balance:0};db.customers.push(c)}c.balance+=total}db.sales.unshift({id:Date.now(),productId:p.id,qty:q,total,profit,payment,customer,date:new Date().toISOString()});save();closeModal();toast("Sale recorded")}
+function openCustomer(){openModal("Add Customer",`<div class="form"><label>Name<input id="cname" placeholder="Customer name"></label><label>Phone<input id="cphone" placeholder="Phone number"></label><button class="primary" onclick="addCustomer()">Save Customer</button></div>`)}
+function addCustomer(){let name=cname.value.trim();if(!name)return toast("Enter a name");db.customers.push({id:Date.now(),name,phone:cphone.value.trim(),balance:0});save();closeModal();toast("Customer added")}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function fmtDate(x){return x?new Date(x).toLocaleDateString("en-NG"):"—"}
+function renderAll(){renderDashboard();renderProducts();renderSales();renderCustomers();renderReports()}
+function renderDashboard(){
+let today=new Date().toDateString(),ts=db.sales.filter(s=>new Date(s.date).toDateString()===today);
+mSales.textContent=money(ts.reduce((a,s)=>a+s.total,0));mProfit.textContent=money(ts.reduce((a,s)=>a+s.profit,0));mProducts.textContent=db.products.length;mLow.textContent=db.products.filter(p=>p.qty<=p.low).length;
+let now=Date.now(),soon=now+30*864e5,ex=db.products.filter(p=>p.exp&&new Date(p.exp).getTime()<=soon).slice(0,8);
+expiryList.innerHTML=ex.length?ex.map(p=>`<div class="alert"><div>!</div><div><b>${esc(p.name)}</b><small>Expires ${fmtDate(p.exp)}</small></div></div>`).join(""):'<div class="empty">No products expiring within 30 days.</div>';
+recentSales.innerHTML=db.sales.slice(0,6).map(s=>{let p=db.products.find(x=>x.id===s.productId);return `<div class="list-row"><b>${esc(p?.name||"Deleted product")}</b> × ${s.qty}<span style="float:right;font-weight:800">${money(s.total)}</span><br><small style="color:var(--muted)">${fmtDate(s.date)} • ${s.payment}</small></div>`}).join("")||'<div class="empty">No sales yet.</div>';
+}
+function renderProducts(){
+let q=(document.getElementById("productSearch")?.value||"").toLowerCase();let items=db.products.filter(p=>p.name.toLowerCase().includes(q)||p.cat.toLowerCase().includes(q));
+productsTable.innerHTML=items.length?`<table><tr><th>Product</th><th>Price</th><th>Stock</th><th>Expiry</th></tr>${items.map(p=>`<tr><td><b>${esc(p.name)}</b><br><small style="color:var(--muted)">${esc(p.cat)}</small></td><td>${money(p.sell)}</td><td><span class="badge ${p.qty<=p.low?'warn':''}">${p.qty}</span></td><td>${fmtDate(p.exp)}</td></tr>`).join("")}</table>`:'<div class="empty">No products found.</div>';
+}
+function renderSales(){
+salesTable.innerHTML=db.sales.length?`<table><tr><th>Product</th><th>Qty</th><th>Total</th><th>Profit</th><th>Date</th></tr>${db.sales.map(s=>{let p=db.products.find(x=>x.id===s.productId);return `<tr><td>${esc(p?.name||"Deleted")}</td><td>${s.qty}</td><td>${money(s.total)}</td><td>${money(s.profit)}</td><td>${fmtDate(s.date)}</td></tr>`}).join("")}</table>`:'<div class="empty">No sales yet.</div>';
+}
+function renderCustomers(){
+customersTable.innerHTML=db.customers.length?`<table><tr><th>Customer</th><th>Phone</th><th>Balance</th></tr>${db.customers.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.phone||"—")}</td><td>${money(c.balance)}</td></tr>`).join("")}</table>`:'<div class="empty">No customers yet.</div>';
+}
+function renderReports(){
+rRevenue.textContent=money(db.sales.reduce((a,s)=>a+s.total,0));rProfit.textContent=money(db.sales.reduce((a,s)=>a+s.profit,0));rStock.textContent=db.products.reduce((a,p)=>a+p.qty,0);rCredit.textContent=money(db.customers.reduce((a,c)=>a+c.balance,0));
+let map={};db.sales.forEach(s=>map[s.productId]=(map[s.productId]||0)+s.qty);let arr=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,5);
+bestSellers.innerHTML=arr.length?arr.map(([id,q],i)=>{let p=db.products.find(x=>x.id==id);return `<div class="list-row"><b>${i+1}. ${esc(p?.name||"Deleted")}</b><span style="float:right;color:var(--muted)">${q} sold</span></div>`}).join(""):'<div class="empty">Sales will appear here.</div>';
+}
+renderAll();
+</script>
+</body>
+</html>
