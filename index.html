@@ -144,7 +144,18 @@ tr:last-child td{border-bottom:0}
     <div class="card metric"><small>Credit Owed</small><strong id="rCredit">₦0</strong></div>
   </div>
   <div class="section card"><div class="section-title"><h3>Best sellers</h3><span>By units sold</span></div><div id="bestSellers"></div></div>
-</section>
+<div class="section card">
+  <div class="section-title">
+    <h3>Backup & Restore</h3>
+    <p>Protect your MediStock data</p>
+  </div>
+
+  <div class="actions">
+    <button class="primary" onclick="exportBackup()">⬇ Export Backup</button>
+    <button onclick="document.getElementById('backupFile').click()">⬆ Import Backup</button>
+    <input id="backupFile" type="file" accept=".json" style="display:none" onchange="importBackup(event)">
+  </div>
+</div>/section>
 </main>
 
 <div id="modal" class="modal"><div class="sheet">
@@ -183,7 +194,52 @@ function openCustomer(){openModal("Add Customer",`<div class="form"><label>Name<
 function addCustomer(){let name=cname.value.trim();if(!name)return toast("Enter a name");db.customers.push({id:Date.now(),name,phone:cphone.value.trim(),balance:0});save();closeModal();toast("Customer added")}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 function fmtDate(x){return x?new Date(x).toLocaleDateString("en-NG"):"—"}
-function renderAll(){renderDashboard();renderProducts();renderSales();renderCustomers();renderReports()}
+function exportBackup(){
+  const data = JSON.stringify(db, null, 2);
+  const blob = new Blob([data], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = "medistock-backup.json";
+  a.click();
+
+  URL.revokeObjectURL(url);
+  toast("Backup exported successfully");
+}
+
+function importBackup(event){
+  const file = event.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(e){
+    try{
+      const imported = JSON.parse(e.target.result);
+
+      if(!imported.products || !imported.sales || !imported.customers){
+        throw new Error("Invalid backup");
+      }
+
+      if(!confirm("Restore this backup? Current MediStock data will be replaced.")){
+        event.target.value = "";
+        return;
+      }
+
+      db = imported;
+      save();
+      renderAll();
+      toast("Backup restored successfully");
+    }catch(error){
+      alert("This is not a valid MediStock backup.");
+    }
+
+    event.target.value = "";
+  };
+
+  reader.readAsText(file);
+}function renderAll(){renderDashboard();renderProducts();renderSales();renderCustomers();renderReports()}
 function renderDashboard(){
 let today=new Date().toDateString(),ts=db.sales.filter(s=>new Date(s.date).toDateString()===today);
 mSales.textContent=money(ts.reduce((a,s)=>a+s.total,0));mProfit.textContent=money(ts.reduce((a,s)=>a+s.profit,0));mProducts.textContent=db.products.length;mLow.textContent=db.products.filter(p=>p.qty<=p.low).length;
