@@ -249,7 +249,7 @@ recentSales.innerHTML=db.sales.slice(0,6).map(s=>{let p=db.products.find(x=>x.id
 }
 function renderProducts(){
 let q=(document.getElementById("productSearch")?.value||"").toLowerCase();let items=db.products.filter(p=>p.name.toLowerCase().includes(q)||p.cat.toLowerCase().includes(q));
-productsTable.innerHTML=items.length?`<table><tr><th>Product</th><th>Price</th><th>Stock</th><th>Expiry</th></tr>${items.map(p=>`<tr><td><b>${esc(p.name)}</b><br><small style="color:var(--muted)">${esc(p.cat)}</small></td><td>${money(p.sell)}</td><td><span class="badge ${p.qty<=p.low?'warn':''}">${p.qty}</span></td><td>${fmtDate(p.exp)}</td></tr>`).join("")}</table>`:'<div class="empty">No products found.</div>';
+productsTable.innerHTML=items.length?`<table><tr><th>Product</th><th>Supplier</th><th>Price</th><th>Stock</th><th>Expiry</th></tr>${items.map(p=>`<tr><td><b>${esc(p.name)}</b><br><small style="color:var(--muted)">${esc(p.cat)}</small></td><td>${esc(p.supplier||"—")}</td><td>${money(p.sell)}</td><td><span class="badge ${p.qty<=p.low?'warn':''}">${p.qty}</span></td><td>${fmtDate(p.exp)}</td></tr>`).join("")}</table>`:'<div class="empty">No products found.</div>';
 }
 function renderSales(){
 salesTable.innerHTML=db.sales.length?`<table><tr><th>Product</th><th>Qty</th><th>Total</th><th>Profit</th><th>Date</th></tr>${db.sales.map(s=>{let p=db.products.find(x=>x.id===s.productId);return `<tr><td>${esc(p?.name||"Deleted")}</td><td>${s.qty}</td><td>${money(s.total)}</td><td>${money(s.profit)}</td><td>${fmtDate(s.date)}</td></tr>`}).join("")}</table>`:'<div class="empty">No sales yet.</div>';
